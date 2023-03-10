@@ -55,10 +55,18 @@ class CliviaGenerator
     end
 
     player_selection = gets_number(questions[:incorrect_answers].length + 1)
-    @answers.each_with_index.map do |answer, index|
-      player_answer = answer if player_selection == index + 1
-    end
+    player_answer = @answers.select { |answer| answer == player_selection - 1 }.first
+
     # if response is correct, put a correct message and increase score
+    if player_selection == correct_answer_index
+      puts "#{@html_entities.decode(player_answer)}... Correct"
+      @score += 10
+    else
+      puts "#{@html_entities.decode(player_answer)}... Incorrect"
+      puts "The correct answer was: #{@html_entities.decode(questions[:correct_answer])}"
+    end
+
+    
     # if response is incorrect, put an incorrect message, and which was the correct answer
     # once the questions end, show user's score and promp to save it
   end
