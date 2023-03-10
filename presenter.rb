@@ -11,4 +11,3 @@ module Presenter
     # print the score message
   end
 end
-

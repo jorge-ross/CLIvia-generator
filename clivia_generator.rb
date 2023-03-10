@@ -1,12 +1,18 @@
 # do not forget to require your gem dependencies
+require "htmlentities"
 require_relative "presenter"
 require_relative "requester"
+require_relative "services"
 
 class CliviaGenerator
   include Presenter
   include Requester
 
   def initialize
+    @filename = ARGV[0] || "scores.json"
+    @questions = []
+    @score = 0
+    @html_entities = HTMLEntities.new
     # we need to initialize a couple of properties here
   end
 
@@ -14,17 +20,44 @@ class CliviaGenerator
     # welcome message
     print_welcome
     action = select_main_menu_action
+
+    until action == "exit"
+      case action
+      when "random" then random_trivia
+      when "scores" then print_scores
+      end
+
+      # print_welcome
+      action = select_main_menu_action
+    end
     # prompt the user for an action
     # keep going until the user types exit
   end
 
   def random_trivia
-    # load the questions from the api
-    # questions are loaded, then let's ask them
+    load_questions.each do |questions|
+      puts "Category: #{@html_entities.decode(questions[:category])} | Difficulty: #{@html_entities.decode(questions[:difficulty])}"
+      ask_questions(questions)
+      puts "\n"
+    end
   end
 
-  def ask_questions
+  def ask_questions(questions)
     # ask each question
+    player_answer = ""
+    correct_answer_index = 0
+
+    puts "Question: #{@html_entities.decode(questions[:question])}"
+    @answers = questions[:incorrect_answers] << (questions[:correct_answer]) #mix missing
+    @answers.each_with_index.map do |answer, index|
+      puts "#{index + 1}. #{@html_entities.decode(answer)}"
+      correct_answer_index = index + 1 if answer == questions[:correct_answer]
+    end
+
+    player_selection = gets_number(questions[:incorrect_answers].length + 1)
+    @answers.each_with_index.map do |answer, index|
+      player_answer = answer if player_selection == index + 1
+    end
     # if response is correct, put a correct message and increase score
     # if response is incorrect, put an incorrect message, and which was the correct answer
     # once the questions end, show user's score and promp to save it
@@ -39,6 +72,7 @@ class CliviaGenerator
   end
 
   def load_questions
+    @questions = Clivia.gets_trivia[:results]
     # ask the api for a random set of questions
     # then parse the questions
   end
@@ -48,6 +82,7 @@ class CliviaGenerator
   end
 
   def print_scores
+    puts "here are the scores"
     # print the scores sorted from top to bottom
   end
 end
