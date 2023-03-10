@@ -12,7 +12,7 @@ class CliviaGenerator
     @filename = ARGV[0] || "scores.json"
     @questions = []
     @score = 0
-    @html_entities = HTMLEntities.new
+    @html_e = HTMLEntities.new
     # we need to initialize a couple of properties here
   end
 
@@ -36,38 +36,35 @@ class CliviaGenerator
 
   def random_trivia
     load_questions.each do |questions|
-      puts "Category: #{@html_entities.decode(questions[:category])} | Difficulty: #{@html_entities.decode(questions[:difficulty])}"
+      puts "Category: #{@html_e.decode(questions[:category])} | Difficulty: #{@html_e.decode(questions[:difficulty])}"
       ask_questions(questions)
       puts "\n"
     end
+    print_score
   end
 
   def ask_questions(questions)
     # ask each question
-    player_answer = ""
     correct_answer_index = 0
 
-    puts "Question: #{@html_entities.decode(questions[:question])}"
-    @answers = questions[:incorrect_answers] << (questions[:correct_answer]) #mix missing
+    puts "Question: #{@html_e.decode(questions[:question])}"
+    @answers = questions[:incorrect_answers] << (questions[:correct_answer]) # mix missing
     @answers.each_with_index.map do |answer, index|
-      puts "#{index + 1}. #{@html_entities.decode(answer)}"
+      puts "#{index + 1}. #{@html_e.decode(answer)}"
       correct_answer_index = index + 1 if answer == questions[:correct_answer]
     end
 
-    player_selection = gets_number(questions[:incorrect_answers].length + 1)
-    player_answer = @answers.select { |answer| answer == player_selection - 1 }.first
-
+    player_answer = gets_number(questions[:incorrect_answers].length + 1)
     # if response is correct, put a correct message and increase score
-    if player_selection == correct_answer_index
-      puts "#{@html_entities.decode(player_answer)}... Correct"
+    # if response is incorrect, put an incorrect message, and which was the correct answer
+    if player_answer == correct_answer_index
+      puts "#{@html_e.decode(player_answer)}... Correct"
       @score += 10
     else
-      puts "#{@html_entities.decode(player_answer)}... Incorrect"
-      puts "The correct answer was: #{@html_entities.decode(questions[:correct_answer])}"
+      puts "#{@html_e.decode(player_answer)}... Incorrect"
+      puts "The correct answer was: #{@html_e.decode(questions[:correct_answer])}"
     end
 
-    
-    # if response is incorrect, put an incorrect message, and which was the correct answer
     # once the questions end, show user's score and promp to save it
   end
 
