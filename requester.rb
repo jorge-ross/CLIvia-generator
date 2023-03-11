@@ -5,18 +5,33 @@ module Requester
     gets_option(options)
   end
 
-  def ask_question(question)
-    # show category and difficulty from question
-    # show the question
-    # show each one of the options
-    # grab user input
+  def will_save?(score)
+    score_options = ["y", "n"]
+    action = ""
+    
+    loop do
+      puts "Do you want to save your score? (#{score_options.join("/")})"
+      print "> "
+      action = gets.chomp.strip.downcase
+      break if score_options.include?(action)
+      
+      puts "Invalid option"
+    end
+
+    case action
+    when "y" then save_score
+    when "n" then @score = 0
+    end
   end
 
-  def will_save?(score)
-    # show user's score
-    # ask the user to save the score
-    # grab user input
-    # prompt the user to give the score a name if there is no name given, set it as Anonymous
+  # prompt the user to give the score a name if there is no name given, set it as Anonymous
+  def save_score
+    puts "Type the name to assign to the score"
+    print "> "
+    name = gets.chomp
+    name = "Anonymous" if name.empty?
+    data = { score: @score, name: name }
+    save(data)
   end
 
   def gets_option(options)
