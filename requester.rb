@@ -5,16 +5,16 @@ module Requester
     gets_option(options)
   end
 
-  def will_save?(score)
+  def will_save?(_score)
     score_options = ["y", "n"]
     action = ""
-    
+
     loop do
-      puts "Do you want to save your score? (#{score_options.join("/")})"
+      puts "Do you want to save your score? (#{score_options.join('/')})"
       print "> "
       action = gets.chomp.strip.downcase
       break if score_options.include?(action)
-      
+
       puts "Invalid option"
     end
 
