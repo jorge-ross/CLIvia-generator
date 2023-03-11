@@ -13,19 +13,12 @@ class CliviaGenerator
   def initialize
     @filename = "scores.json"
     @questions = []
-    @score = 0    
+    @score = 0
     @html_e = HTMLEntities.new
     @records = []
   end
 
   def start
-    begin
-      File.open(@filename, "r") do |file|
-        @records = JSON.parse(file.read)
-      end
-    rescue Errno::ENOENT
-    end
-    # welcome message
     print_welcome
     action = select_main_menu_action
 
@@ -34,7 +27,7 @@ class CliviaGenerator
       when "random" then random_trivia
       when "scores" then parse_scores
       end
-      # print_welcome
+      print_welcome
       action = select_main_menu_action
     end
     # prompt the user for an action
@@ -57,7 +50,7 @@ class CliviaGenerator
     correct_answer_index = 0
 
     puts "Question: #{@html_e.decode(questions[:question])}"
-    @answers = questions[:incorrect_answers].concat([questions[:correct_answer]]).shuffle!
+    @answers = questions[:incorrect_answers].push(questions[:correct_answer]).shuffle!
     @answers.each_with_index.map do |answer, index|
       puts "#{index + 1}. #{@html_e.decode(answer)}"
       correct_answer_index = index + 1 if answer == questions[:correct_answer]
@@ -79,42 +72,35 @@ class CliviaGenerator
 
   def save(data)
     @records << data
-    File.open(@filename, "w") do |file|
-      file.write(JSON.pretty_generate(@records))
-    end
+    File.write(@filename, JSON.pretty_generate(@records))
     @score = 0
   end
 
   def parse_scores
-    parsed_scores = File.open(@filename, "r")
-    scores = []
-    parsed_scores.each_line do |line|
-      name, score = line.split(",")
-      scores << { name: name, score: score.to_i }
+    scores_file = "scores.json"
+
+    begin
+      parsed_scores = JSON.parse(File.read(scores_file))
+    rescue Errno::ENOENT
+      parsed_scores = []
     end
-    print_scores(scores)
+
+    print_scores(parsed_scores)
   end
 
   def load_questions
     @questions = Clivia.gets_trivia[:results]
   end
 
-  def print_scores(scores)
-    
-    sorted_scores = scores.sort_by { |s| s[:score] }.reverse
-    p sorted_scores
-
+  def print_scores(parsed_scores)
     table = Terminal::Table.new do |t|
-    t.title = "Top Scores"
-    t.headings = ["Name", "Score"]
-    end
-
-    
-    sorted_scores.each do |score|
-      table.add_row [score[:name], score[:score]]
+      t.title = "Top Scores"
+      t.headings = ["Name", "Score"]
+      parsed_scores.sort_by { |s| s["score"] }.reverse.each do |a|
+        t.add_row [a["name"], a["score"]]
+      end
     end
 
     puts table
-    # print the scores sorted from top to bottom
   end
 end
