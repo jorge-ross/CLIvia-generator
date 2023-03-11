@@ -1,5 +1,7 @@
 # do not forget to require your gem dependencies
 require "htmlentities"
+require "json"
+require "terminal-table"
 require_relative "presenter"
 require_relative "requester"
 require_relative "services"
@@ -9,14 +11,20 @@ class CliviaGenerator
   include Requester
 
   def initialize
-    @filename = ARGV[0] || "scores.json"
+    @filename = "scores.json"
     @questions = []
-    @score = 0
+    @score = 0    
     @html_e = HTMLEntities.new
-    # we need to initialize a couple of properties here
+    @records = []
   end
 
   def start
+    begin
+      File.open(@filename, "r") do |file|
+        @records = JSON.parse(file.read)
+      end
+    rescue Errno::ENOENT
+    end
     # welcome message
     print_welcome
     action = select_main_menu_action
@@ -24,9 +32,8 @@ class CliviaGenerator
     until action == "exit"
       case action
       when "random" then random_trivia
-      when "scores" then print_scores
+      when "scores" then parse_scores
       end
-
       # print_welcome
       action = select_main_menu_action
     end
@@ -41,6 +48,8 @@ class CliviaGenerator
       puts "\n"
     end
     print_score
+    puts "-" * 40
+    will_save?(@score)
   end
 
   def ask_questions(questions)
@@ -48,7 +57,7 @@ class CliviaGenerator
     correct_answer_index = 0
 
     puts "Question: #{@html_e.decode(questions[:question])}"
-    @answers = questions[:incorrect_answers] << (questions[:correct_answer]) # mix missing
+    @answers = questions[:incorrect_answers].concat([questions[:correct_answer]]).shuffle!
     @answers.each_with_index.map do |answer, index|
       puts "#{index + 1}. #{@html_e.decode(answer)}"
       correct_answer_index = index + 1 if answer == questions[:correct_answer]
@@ -69,25 +78,43 @@ class CliviaGenerator
   end
 
   def save(data)
-    # write to file the scores data
+    @records << data
+    File.open(@filename, "w") do |file|
+      file.write(JSON.pretty_generate(@records))
+    end
+    @score = 0
   end
 
   def parse_scores
-    # get the scores data from file
+    parsed_scores = File.open(@filename, "r")
+    scores = []
+    parsed_scores.each_line do |line|
+      name, score = line.split(",")
+      scores << { name: name, score: score.to_i }
+    end
+    print_scores(scores)
   end
 
   def load_questions
     @questions = Clivia.gets_trivia[:results]
-    # ask the api for a random set of questions
-    # then parse the questions
   end
 
-  def parse_questions
-    # questions came with an unexpected structure, clean them to make it usable for our purposes
-  end
+  def print_scores(scores)
+    
+    sorted_scores = scores.sort_by { |s| s[:score] }.reverse
+    p sorted_scores
 
-  def print_scores
-    puts "here are the scores"
+    table = Terminal::Table.new do |t|
+    t.title = "Top Scores"
+    t.headings = ["Name", "Score"]
+    end
+
+    
+    sorted_scores.each do |score|
+      table.add_row [score[:name], score[:score]]
+    end
+
+    puts table
     # print the scores sorted from top to bottom
   end
 end
