@@ -11,7 +11,7 @@ class CliviaGenerator
   include Requester
 
   def initialize
-    @filename = "scores.json"
+    @filename = ARGV.shift || "scores.json"
     @questions = []
     @score = 0
     @html_e = HTMLEntities.new
@@ -66,7 +66,6 @@ class CliviaGenerator
       puts "#{@html_e.decode(player_answer)}... Incorrect"
       puts "The correct answer was: #{@html_e.decode(questions[:correct_answer])}"
     end
-
     # once the questions end, show user's score and promp to save it
   end
 
@@ -77,10 +76,9 @@ class CliviaGenerator
   end
 
   def parse_scores
-    scores_file = "scores.json"
-
+    parsed_scores = @records
     begin
-      parsed_scores = JSON.parse(File.read(scores_file))
+      parsed_scores = JSON.parse(File.read(@filename))
     rescue Errno::ENOENT
       parsed_scores = []
     end
